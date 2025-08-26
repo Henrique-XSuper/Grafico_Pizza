@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard de Gastos</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen p-6">
+
+  <h1 class="text-3xl font-bold mb-6 text-center">💸 Dashboard de Gastos</h1>
+
+  <!-- Inputs -->
+  <div class="flex flex-col md:flex-row gap-4 mb-6 justify-center">
+    <input id="categoryInput" type="text" placeholder="Categoria"
+      class="p-2 rounded bg-gray-800 border border-gray-700 text-white w-60">
+    <input id="valueInput" type="number" placeholder="Valor"
+      class="p-2 rounded bg-gray-800 border border-gray-700 text-white w-40">
+    <button onclick="addData()" 
+      class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">➕ Adicionar Item</button>
+  </div>
+
+  <!-- KPIs -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+    <div class="bg-gray-800 p-4 rounded shadow">
+      <h2 class="text-xl font-semibold">Total de Gastos</h2>
+      <p id="totalValue" class="text-2xl font-bold">R$ 0,00</p>
+    </div>
+    <div class="bg-gray-800 p-4 rounded shadow">
+      <h2 class="text-xl font-semibold">Número de Itens</h2>
+      <p id="itemCount" class="text-2xl font-bold">0</p>
+    </div>
+    <div class="bg-gray-800 p-4 rounded shadow">
+      <h2 class="text-xl font-semibold">Média por Item</h2>
+      <p id="averageValue" class="text-2xl font-bold">R$ 0,00</p>
+    </div>
+  </div>
+
+  <!-- Gráfico -->
+  <div class="bg-gray-800 p-4 rounded shadow mb-6">
+    <canvas id="myChart"></canvas>
+  </div>
+
+  <!-- Lista de Itens -->
+  <div class="bg-gray-800 p-4 rounded shadow">
+    <h2 class="text-xl font-semibold mb-2">Itens</h2>
+    <ul id="itemList" class="space-y-2"></ul>
+  </div>
+
+  <script>
+    let items = [];
+
+    // Carregar dados salvos no início
+    window.onload = () => {
+      const saved = localStorage.getItem("dashboardItems");
+      if (saved) {
+        items = JSON.parse(saved);
+        updateAll();
+      }
+    };
+
+    // Função de salvar automático
+    function saveData() {
+      localStorage.setItem("dashboardItems", JSON.stringify(items));
+    }
+
+    // Configuração do gráfico
+    const ctx = document.getElementById('myChart').getContext('2d');
+    const chart = new Chart(ctx, {
+      type: 'pie',
+      data: {
+        labels: [],
+        datasets: [{
+          data: [],
+          backgroundColor: ['#f87171','#60a5fa','#34d399','#fbbf24','#a78bfa','#f472b6']
+        }]
+      }
+    });
+
+    function addData() {
+      const category = document.getElementById("categoryInput").value;
+      const value = parseFloat(document.getElementById("valueInput").value);
+
+      if (!category || isNaN(value)) return;
+
+      items.push({ category, value });
+      document.getElementById("categoryInput").value = "";
+      document.getElementById("valueInput").value = "";
+
+      updateAll();
+      saveData();
+    }
+
+    function removeItem(index) {
+      items.splice(index, 1);
+      updateAll();
+      saveData();
+    }
+
+    function updateAll() {
+      const total = items.reduce((sum, item) => sum + item.value, 0);
+      document.getElementById("totalValue").innerText = "R$ " + total.toFixed(2);
+      document.getElementById("itemCount").innerText = items.length;
+      document.getElementById("averageValue").innerText = "R$ " + (items.length ? (total / items.length).toFixed(2) : "0,00");
+
+      // Atualizar lista
+      const list = document.getElementById("itemList");
+      list.innerHTML = "";
+      items.forEach((item, i) => {
+        const li = document.createElement("li");
+        li.className = "flex justify-between items-center bg-gray-700 p-2 rounded";
+        li.innerHTML = `
+          <span>${item.category}: R$ ${item.value.toFixed(2)}</span>
+          <button onclick="removeItem(${i})" 
+            class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded">🗑️</button>
+        `;
+        list.appendChild(li);
+      });
+
+      // Atualizar gráfico
+      const categories = [...new Set(items.map(i => i.category))];
+      const data = categories.map(cat => items.filter(i => i.category === cat).reduce((sum, it) => sum + it.value, 0));
+
+      chart.data.labels = categories;
+      chart.data.datasets[0].data = data;
+      chart.update();
+    }
+
+    // Enter adiciona
+    document.getElementById("valueInput").addEventListener("keypress", e => {
+      if (e.key === "Enter") addData();
+    });
+    document.getElementById("categoryInput").addEventListener("keypress", e => {
+      if (e.key === "Enter") addData();
+    });
+  </script>
+</body>
+</html>
