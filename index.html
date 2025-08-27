@@ -73,7 +73,7 @@
                     <!-- Chart Title Input -->
                     <div class="mb-6">
                         <label class="block text-sm font-medium text-gray-700 mb-2">Título do Gráfico</label>
-                        <input type="text" id="chartTitle" placeholder="Ex: Vendas por Região"  
+                        <input type="text" id="chartTitle" placeholder="Ex: Vendas por Região" 
                                class="data-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none">
                     </div>
 
@@ -82,7 +82,7 @@
                         <div class="flex gap-3">
                             <div class="flex-1">
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
-                                <input type="text" id="categoryInput" placeholder="Ex: Vendas Online"  
+                                <input type="text" id="categoryInput" placeholder="Ex: Vendas Online" 
                                        class="data-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none">
                             </div>
                             <div class="w-32">
@@ -150,7 +150,7 @@
     </div>
 
     <script>
-        let chartData = JSON.parse(localStorage.getItem('chartData')) || [];
+        let chartData = [];
         let currentChart = null;
         
         const colors = [
@@ -158,16 +158,6 @@
             '#EC4899', '#06B6D4', '#84CC16', '#F97316', '#6366F1',
             '#14B8A6', '#F43F5E', '#8B5A2B', '#059669', '#DC2626'
         ];
-
-        const chartTitleInput = document.getElementById('chartTitle');
-
-        // Load saved title
-        chartTitleInput.value = localStorage.getItem('chartTitle') || '';
-
-        function saveData() {
-            localStorage.setItem('chartData', JSON.stringify(chartData));
-            localStorage.setItem('chartTitle', chartTitleInput.value);
-        }
 
         function addData() {
             const category = document.getElementById('categoryInput').value.trim();
@@ -180,8 +170,8 @@
             
             chartData.push({ category, value });
             updateDataList();
-            saveData();
             
+            // Clear inputs
             document.getElementById('categoryInput').value = '';
             document.getElementById('valueInput').value = '';
             document.getElementById('categoryInput').focus();
@@ -213,7 +203,6 @@
         function removeData(index) {
             chartData.splice(index, 1);
             updateDataList();
-            saveData();
             if (chartData.length > 0) {
                 generateChart();
             } else {
@@ -222,13 +211,10 @@
         }
 
         function clearData() {
-            if (confirm('Deseja realmente limpar todos os dados?')) {
-                chartData = [];
-                updateDataList();
-                clearChart();
-                chartTitleInput.value = '';
-                saveData();
-            }
+            chartData = [];
+            updateDataList();
+            clearChart();
+            document.getElementById('chartTitle').value = '';
         }
 
         function clearChart() {
@@ -248,10 +234,9 @@
                 { category: 'Marketplace', value: 15000 },
                 { category: 'Atacado', value: 10000 }
             ];
-            chartTitleInput.value = 'Vendas por Canal - 2024';
+            document.getElementById('chartTitle').value = 'Vendas por Canal - 2024';
             updateDataList();
             generateChart();
-            saveData();
         }
 
         function generateChart() {
@@ -261,8 +246,9 @@
             }
 
             const total = chartData.reduce((sum, item) => sum + item.value, 0);
-            const chartTitle = chartTitleInput.value || 'Gráfico de Pizza';
+            const chartTitle = document.getElementById('chartTitle').value || 'Gráfico de Pizza';
             
+            // Create SVG
             let cumulativePercentage = 0;
             const radius = 150;
             const centerX = 200;
@@ -370,8 +356,7 @@
                     <div class="text-2xl font-bold text-orange-600 mb-2">${max.toLocaleString('pt-BR')}</div>
                     <div class="text-orange-800 font-medium">Maior Valor</div>
                 </div>
-                <div class="bg-gradient-to-br from-red-50 to
-                      <div class="bg-gradient-to-br from-red-50 to-red-100 p-6 rounded-xl">
+                <div class="bg-gradient-to-br from-red-50 to-red-100 p-6 rounded-xl">
                     <div class="text-lg font-bold text-red-600 mb-1">${minItem.category}</div>
                     <div class="text-2xl font-bold text-red-600 mb-2">${min.toLocaleString('pt-BR')}</div>
                     <div class="text-red-800 font-medium">Menor Valor</div>
@@ -425,16 +410,10 @@
             });
         }
 
-        // Enter key to add data
+        // Allow Enter key to add data
         document.getElementById('valueInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') addData();
-        });
-
-        // Load saved chart on page load
-        if (chartData.length > 0) {
-            updateDataList();
-            generateChart();
-        }
-    </script>
-</body>
-</html>
+            if (e.key === 'Enter') {
+               ;
+            }
+        }); </body>
+            </html>
