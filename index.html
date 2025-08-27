@@ -1,138 +1,440 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Dashboard de Gastos</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gráfico de Pizza Interativo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        
+        .chart-container {
+            position: relative;
+            width: 400px;
+            height: 400px;
+        }
+        
+        .pie-slice {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .pie-slice:hover {
+            transform: scale(1.05);
+            filter: brightness(1.1);
+        }
+        
+        .legend-item {
+            transition: all 0.2s ease;
+        }
+        
+        .legend-item:hover {
+            transform: translateX(5px);
+            background-color: #f8fafc;
+        }
+        
+        .data-input {
+            transition: all 0.2s ease;
+        }
+        
+        .data-input:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .animate-slide-in {
+            animation: slideIn 0.3s ease-out;
+        }
+    </style>
 </head>
-<body class="bg-gray-900 text-gray-100 min-h-screen p-6">
+<body class="bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-7xl mx-auto">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <h1 class="text-4xl font-bold text-gray-800 mb-2">📊 Gráfico de Pizza Interativo</h1>
+                <p class="text-lg text-gray-600">Crie visualizações profissionais dos seus dados</p>
+            </div>
 
-  <h1 class="text-3xl font-bold mb-6 text-center">💸 Dashboard de Gastos</h1>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Input Section -->
+                <div class="bg-white rounded-2xl shadow-xl p-8">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
+                        <span class="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm mr-3">1</span>
+                        Inserir Dados
+                    </h2>
+                    
+                    <!-- Chart Title Input -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Título do Gráfico</label>
+                        <input type="text" id="chartTitle" placeholder="Ex: Vendas por Região"  
+                               class="data-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none">
+                    </div>
 
-  <!-- Inputs -->
-  <div class="flex flex-col md:flex-row gap-4 mb-6 justify-center">
-    <input id="categoryInput" type="text" placeholder="Categoria"
-      class="p-2 rounded bg-gray-800 border border-gray-700 text-white w-60">
-    <input id="valueInput" type="number" placeholder="Valor"
-      class="p-2 rounded bg-gray-800 border border-gray-700 text-white w-40">
-    <button onclick="addData()" 
-      class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">➕ Adicionar Item</button>
-  </div>
+                    <!-- Data Entry Form -->
+                    <div class="space-y-4 mb-6">
+                        <div class="flex gap-3">
+                            <div class="flex-1">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
+                                <input type="text" id="categoryInput" placeholder="Ex: Vendas Online"  
+                                       class="data-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none">
+                            </div>
+                            <div class="w-32">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Valor</label>
+                                <input type="number" id="valueInput" placeholder="1000" min="0" step="0.01"
+                                       class="data-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none">
+                            </div>
+                        </div>
+                        <button onclick="addData()" class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 px-6 rounded-lg font-medium hover:from-blue-600 hover:to-purple-700 transition-all duration-200 transform hover:scale-105 shadow-lg">
+                            ➕ Adicionar Item
+                        </button>
+                    </div>
 
-  <!-- KPIs -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-    <div class="bg-gray-800 p-4 rounded shadow">
-      <h2 class="text-xl font-semibold">Total de Gastos</h2>
-      <p id="totalValue" class="text-2xl font-bold">R$ 0,00</p>
+                    <!-- Data List -->
+                    <div class="mb-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-3">Dados Inseridos</h3>
+                        <div id="dataList" class="space-y-2 max-h-64 overflow-y-auto">
+                            <!-- Data items will be inserted here -->
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex gap-3">
+                        <button onclick="generateChart()" class="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3 px-6 rounded-lg font-medium hover:from-green-600 hover:to-emerald-700 transition-all duration-200 transform hover:scale-105 shadow-lg">
+                            📈 Gerar Gráfico
+                        </button>
+                        <button onclick="clearData()" class="bg-gradient-to-r from-red-500 to-pink-600 text-white py-3 px-4 rounded-lg font-medium hover:from-red-600 hover:to-pink-700 transition-all duration-200 transform hover:scale-105 shadow-lg">
+                            🗑️
+                        </button>
+                    </div>
+
+                    <!-- Sample Data Button -->
+                    <button onclick="loadSampleData()" class="w-full mt-4 bg-gradient-to-r from-gray-500 to-gray-600 text-white py-2 px-4 rounded-lg font-medium hover:from-gray-600 hover:to-gray-700 transition-all duration-200 text-sm">
+                        📋 Carregar Dados de Exemplo
+                    </button>
+                </div>
+
+                <!-- Chart Section -->
+                <div class="bg-white rounded-2xl shadow-xl p-8">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
+                        <span class="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm mr-3">2</span>
+                        Visualização
+                    </h2>
+                    
+                    <div id="chartContainer" class="text-center">
+                        <div class="py-16">
+                            <div class="text-6xl mb-4">📊</div>
+                            <p class="text-gray-500 text-lg">Adicione dados para gerar o gráfico</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Section -->
+            <div id="statsSection" class="mt-8 bg-white rounded-2xl shadow-xl p-8 hidden">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
+                    <span class="bg-purple-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm mr-3">3</span>
+                    Estatísticas Detalhadas
+                </h2>
+                <div id="statsContent" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Statistics will be inserted here -->
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="bg-gray-800 p-4 rounded shadow">
-      <h2 class="text-xl font-semibold">Número de Itens</h2>
-      <p id="itemCount" class="text-2xl font-bold">0</p>
-    </div>
-    <div class="bg-gray-800 p-4 rounded shadow">
-      <h2 class="text-xl font-semibold">Média por Item</h2>
-      <p id="averageValue" class="text-2xl font-bold">R$ 0,00</p>
-    </div>
-  </div>
 
-  <!-- Gráfico -->
-  <div class="bg-gray-800 p-4 rounded shadow mb-6">
-    <canvas id="myChart"></canvas>
-  </div>
+    <script>
+        let chartData = JSON.parse(localStorage.getItem('chartData')) || [];
+        let currentChart = null;
+        
+        const colors = [
+            '#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6',
+            '#EC4899', '#06B6D4', '#84CC16', '#F97316', '#6366F1',
+            '#14B8A6', '#F43F5E', '#8B5A2B', '#059669', '#DC2626'
+        ];
 
-  <!-- Lista de Itens -->
-  <div class="bg-gray-800 p-4 rounded shadow">
-    <h2 class="text-xl font-semibold mb-2">Itens</h2>
-    <ul id="itemList" class="space-y-2"></ul>
-  </div>
+        const chartTitleInput = document.getElementById('chartTitle');
 
-  <script>
-    let items = [];
+        // Load saved title
+        chartTitleInput.value = localStorage.getItem('chartTitle') || '';
 
-    // Carregar dados salvos no início
-    window.onload = () => {
-      const saved = localStorage.getItem("dashboardItems");
-      if (saved) {
-        items = JSON.parse(saved);
-        updateAll();
-      }
-    };
+        function saveData() {
+            localStorage.setItem('chartData', JSON.stringify(chartData));
+            localStorage.setItem('chartTitle', chartTitleInput.value);
+        }
 
-    // Função de salvar automático
-    function saveData() {
-      localStorage.setItem("dashboardItems", JSON.stringify(items));
-    }
+        function addData() {
+            const category = document.getElementById('categoryInput').value.trim();
+            const value = parseFloat(document.getElementById('valueInput').value);
+            
+            if (!category || isNaN(value) || value <= 0) {
+                alert('Por favor, insira uma categoria válida e um valor maior que zero.');
+                return;
+            }
+            
+            chartData.push({ category, value });
+            updateDataList();
+            saveData();
+            
+            document.getElementById('categoryInput').value = '';
+            document.getElementById('valueInput').value = '';
+            document.getElementById('categoryInput').focus();
+        }
 
-    // Configuração do gráfico
-    const ctx = document.getElementById('myChart').getContext('2d');
-    const chart = new Chart(ctx, {
-      type: 'pie',
-      data: {
-        labels: [],
-        datasets: [{
-          data: [],
-          backgroundColor: ['#f87171','#60a5fa','#34d399','#fbbf24','#a78bfa','#f472b6']
-        }]
-      }
-    });
+        function updateDataList() {
+            const dataList = document.getElementById('dataList');
+            const total = chartData.reduce((sum, item) => sum + item.value, 0);
+            
+            dataList.innerHTML = chartData.map((item, index) => `
+                <div class="animate-slide-in flex items-center justify-between bg-gray-50 p-3 rounded-lg border">
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 rounded-full mr-3" style="background-color: ${colors[index % colors.length]}"></div>
+                        <span class="font-medium text-gray-800">${item.category}</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="text-gray-600">${item.value.toLocaleString('pt-BR')}</span>
+                        <span class="text-sm text-gray-500">(${((item.value / total) * 100).toFixed(1)}%)</span>
+                        <button onclick="removeData(${index})" class="text-red-500 hover:text-red-700 transition-colors">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
 
-    function addData() {
-      const category = document.getElementById("categoryInput").value;
-      const value = parseFloat(document.getElementById("valueInput").value);
+        function removeData(index) {
+            chartData.splice(index, 1);
+            updateDataList();
+            saveData();
+            if (chartData.length > 0) {
+                generateChart();
+            } else {
+                clearChart();
+            }
+        }
 
-      if (!category || isNaN(value)) return;
+        function clearData() {
+            if (confirm('Deseja realmente limpar todos os dados?')) {
+                chartData = [];
+                updateDataList();
+                clearChart();
+                chartTitleInput.value = '';
+                saveData();
+            }
+        }
 
-      items.push({ category, value });
-      document.getElementById("categoryInput").value = "";
-      document.getElementById("valueInput").value = "";
+        function clearChart() {
+            document.getElementById('chartContainer').innerHTML = `
+                <div class="py-16">
+                    <div class="text-6xl mb-4">📊</div>
+                    <p class="text-gray-500 text-lg">Adicione dados para gerar o gráfico</p>
+                </div>
+            `;
+            document.getElementById('statsSection').classList.add('hidden');
+        }
 
-      updateAll();
-      saveData();
-    }
+        function loadSampleData() {
+            chartData = [
+                { category: 'Vendas Online', value: 45000 },
+                { category: 'Loja Física', value: 30000 },
+                { category: 'Marketplace', value: 15000 },
+                { category: 'Atacado', value: 10000 }
+            ];
+            chartTitleInput.value = 'Vendas por Canal - 2024';
+            updateDataList();
+            generateChart();
+            saveData();
+        }
 
-    function removeItem(index) {
-      items.splice(index, 1);
-      updateAll();
-      saveData();
-    }
+        function generateChart() {
+            if (chartData.length === 0) {
+                alert('Adicione pelo menos um item de dados.');
+                return;
+            }
 
-    function updateAll() {
-      const total = items.reduce((sum, item) => sum + item.value, 0);
-      document.getElementById("totalValue").innerText = "R$ " + total.toFixed(2);
-      document.getElementById("itemCount").innerText = items.length;
-      document.getElementById("averageValue").innerText = "R$ " + (items.length ? (total / items.length).toFixed(2) : "0,00");
+            const total = chartData.reduce((sum, item) => sum + item.value, 0);
+            const chartTitle = chartTitleInput.value || 'Gráfico de Pizza';
+            
+            let cumulativePercentage = 0;
+            const radius = 150;
+            const centerX = 200;
+            const centerY = 200;
+            
+            let svgPaths = '';
+            let legendItems = '';
+            
+            chartData.forEach((item, index) => {
+                const percentage = (item.value / total) * 100;
+                const startAngle = (cumulativePercentage / 100) * 360;
+                const endAngle = ((cumulativePercentage + percentage) / 100) * 360;
+                
+                const startAngleRad = (startAngle - 90) * (Math.PI / 180);
+                const endAngleRad = (endAngle - 90) * (Math.PI / 180);
+                
+                const x1 = centerX + radius * Math.cos(startAngleRad);
+                const y1 = centerY + radius * Math.sin(startAngleRad);
+                const x2 = centerX + radius * Math.cos(endAngleRad);
+                const y2 = centerY + radius * Math.sin(endAngleRad);
+                
+                const largeArcFlag = percentage > 50 ? 1 : 0;
+                
+                const pathData = [
+                    `M ${centerX} ${centerY}`,
+                    `L ${x1} ${y1}`,
+                    `A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`,
+                    'Z'
+                ].join(' ');
+                
+                const color = colors[index % colors.length];
+                
+                svgPaths += `
+                    <path d="${pathData}" 
+                          fill="${color}" 
+                          class="pie-slice" 
+                          data-category="${item.category}"
+                          data-value="${item.value}"
+                          data-percentage="${percentage.toFixed(1)}"
+                          onmouseover="showTooltip(event, '${item.category}', ${item.value}, ${percentage.toFixed(1)})"
+                          onmouseout="hideTooltip()">
+                    </path>
+                `;
+                
+                legendItems += `
+                    <div class="legend-item flex items-center p-3 rounded-lg cursor-pointer" 
+                         onmouseover="highlightSlice('${item.category}')"
+                         onmouseout="unhighlightSlice()">
+                        <div class="w-4 h-4 rounded-full mr-3" style="background-color: ${color}"></div>
+                        <div class="flex-1">
+                            <div class="font-medium text-gray-800">${item.category}</div>
+                            <div class="text-sm text-gray-600">${item.value.toLocaleString('pt-BR')} (${percentage.toFixed(1)}%)</div>
+                        </div>
+                    </div>
+                `;
+                
+                cumulativePercentage += percentage;
+            });
 
-      // Atualizar lista
-      const list = document.getElementById("itemList");
-      list.innerHTML = "";
-      items.forEach((item, i) => {
-        const li = document.createElement("li");
-        li.className = "flex justify-between items-center bg-gray-700 p-2 rounded";
-        li.innerHTML = `
-          <span>${item.category}: R$ ${item.value.toFixed(2)}</span>
-          <button onclick="removeItem(${i})" 
-            class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded">🗑️</button>
-        `;
-        list.appendChild(li);
-      });
+            document.getElementById('chartContainer').innerHTML = `
+                <div class="text-center mb-6">
+                    <h3 class="text-2xl font-bold text-gray-800">${chartTitle}</h3>
+                    <p class="text-gray-600">Total: ${total.toLocaleString('pt-BR')}</p>
+                </div>
+                <div class="flex flex-col lg:flex-row items-center justify-center gap-8">
+                    <div class="chart-container relative">
+                        <svg width="400" height="400" class="drop-shadow-lg">
+                            ${svgPaths}
+                        </svg>
+                        <div id="tooltip" class="absolute bg-gray-800 text-white px-3 py-2 rounded-lg text-sm pointer-events-none opacity-0 transition-opacity duration-200 z-10"></div>
+                    </div>
+                    <div class="space-y-2 max-w-xs w-full">
+                        <h4 class="font-semibold text-gray-800 mb-4">Legenda</h4>
+                        ${legendItems}
+                    </div>
+                </div>
+            `;
 
-      // Atualizar gráfico
-      const categories = [...new Set(items.map(i => i.category))];
-      const data = categories.map(cat => items.filter(i => i.category === cat).reduce((sum, it) => sum + it.value, 0));
+            generateStatistics();
+        }
 
-      chart.data.labels = categories;
-      chart.data.datasets[0].data = data;
-      chart.update();
-    }
+        function generateStatistics() {
+            const total = chartData.reduce((sum, item) => sum + item.value, 0);
+            const average = total / chartData.length;
+            const max = Math.max(...chartData.map(item => item.value));
+            const min = Math.min(...chartData.map(item => item.value));
+            const maxItem = chartData.find(item => item.value === max);
+            const minItem = chartData.find(item => item.value === min);
 
-    // Enter adiciona
-    document.getElementById("valueInput").addEventListener("keypress", e => {
-      if (e.key === "Enter") addData();
-    });
-    document.getElementById("categoryInput").addEventListener("keypress", e => {
-      if (e.key === "Enter") addData();
-    });
-  </script>
+            document.getElementById('statsContent').innerHTML = `
+                <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl">
+                    <div class="text-3xl font-bold text-blue-600 mb-2">${total.toLocaleString('pt-BR')}</div>
+                    <div class="text-blue-800 font-medium">Total Geral</div>
+                </div>
+                <div class="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-xl">
+                    <div class="text-3xl font-bold text-green-600 mb-2">${average.toLocaleString('pt-BR')}</div>
+                    <div class="text-green-800 font-medium">Média</div>
+                </div>
+                <div class="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-xl">
+                    <div class="text-3xl font-bold text-purple-600 mb-2">${chartData.length}</div>
+                    <div class="text-purple-800 font-medium">Categorias</div>
+                </div>
+                <div class="bg-gradient-to-br from-orange-50 to-orange-100 p-6 rounded-xl">
+                    <div class="text-lg font-bold text-orange-600 mb-1">${maxItem.category}</div>
+                    <div class="text-2xl font-bold text-orange-600 mb-2">${max.toLocaleString('pt-BR')}</div>
+                    <div class="text-orange-800 font-medium">Maior Valor</div>
+                </div>
+                <div class="bg-gradient-to-br from-red-50 to
+                      <div class="bg-gradient-to-br from-red-50 to-red-100 p-6 rounded-xl">
+                    <div class="text-lg font-bold text-red-600 mb-1">${minItem.category}</div>
+                    <div class="text-2xl font-bold text-red-600 mb-2">${min.toLocaleString('pt-BR')}</div>
+                    <div class="text-red-800 font-medium">Menor Valor</div>
+                </div>
+                <div class="bg-gradient-to-br from-indigo-50 to-indigo-100 p-6 rounded-xl">
+                    <div class="text-3xl font-bold text-indigo-600 mb-2">${((max/total)*100).toFixed(1)}%</div>
+                    <div class="text-indigo-800 font-medium">Maior Participação</div>
+                </div>
+            `;
+
+            document.getElementById('statsSection').classList.remove('hidden');
+        }
+
+        function showTooltip(event, category, value, percentage) {
+            const tooltip = document.getElementById('tooltip');
+            tooltip.innerHTML = `
+                <div class="font-semibold">${category}</div>
+                <div>Valor: ${value.toLocaleString('pt-BR')}</div>
+                <div>Percentual: ${percentage}%</div>
+            `;
+            tooltip.style.left = (event.offsetX + 10) + 'px';
+            tooltip.style.top = (event.offsetY - 10) + 'px';
+            tooltip.classList.remove('opacity-0');
+            tooltip.classList.add('opacity-100');
+        }
+
+        function hideTooltip() {
+            const tooltip = document.getElementById('tooltip');
+            tooltip.classList.remove('opacity-100');
+            tooltip.classList.add('opacity-0');
+        }
+
+        function highlightSlice(category) {
+            const slices = document.querySelectorAll('.pie-slice');
+            slices.forEach(slice => {
+                if (slice.dataset.category === category) {
+                    slice.style.filter = 'brightness(1.2)';
+                    slice.style.transform = 'scale(1.05)';
+                } else {
+                    slice.style.opacity = '0.7';
+                }
+            });
+        }
+
+        function unhighlightSlice() {
+            const slices = document.querySelectorAll('.pie-slice');
+            slices.forEach(slice => {
+                slice.style.filter = '';
+                slice.style.transform = '';
+                slice.style.opacity = '';
+            });
+        }
+
+        // Enter key to add data
+        document.getElementById('valueInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') addData();
+        });
+
+        // Load saved chart on page load
+        if (chartData.length > 0) {
+            updateDataList();
+            generateChart();
+        }
+    </script>
 </body>
 </html>
