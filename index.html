@@ -412,8 +412,10 @@
 
         // Allow Enter key to add data
         document.getElementById('valueInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-               ;
-            }
-        }); </body>
-            </html>
+        if (e.key === 'Enter') {
+            addData();
+        }
+    });
+</script>
+</body>
+</html>
